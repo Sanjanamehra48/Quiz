@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Interactive Quiz By Sanjana Mehra </title>
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+    align-items: center;
+}
+body {
+    background-image: url('./quiz.jpg');
+    background-size: cover;
+    background-position: center;
+    text-align: center;
+}
+
+.quiz-container {
+    width: 50%;
+    margin: auto;
+    background: rgb(159, 157, 160);
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0px 0px 10px black;
+    margin-top: 20px;
+}
+
+h1 {
+    color: black;
+    margin-top: -5px;
+}
+
+h2 {
+    color: #007bff;
+}
+
+#question-box {
+    background-color: skyblue;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.abcd-box {
+    width: 60px;
+    height: 40px;
+    background-color: #8111dd;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+
+.option-box {
+    display: flex;
+    align-items: center;
+    width: 60%;
+    background-color: gainsboro;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.option-box:hover {
+    background-color: #d8c7d6;
+}
+
+
+.correct {
+    background-color: green !important;
+    color: white !important;
+}
+
+.incorrect {
+    background-color: red !important;
+    color: white !important;
+}
+
+
+.disabled {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+
+button {
+    margin-top: 10px;
+    padding: 10px 15px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: rgba(252, 185, 16, 0.933);
+    font-style: bold;
+    cursor: pointer;
+}
+
+#next {
+    background-color: #28a745;
+    color: white;
+}
+
+#next:hover {
+    background-color: #218838;
+}
+
+#prev {
+    background-color: #ffc107;
+    color: white;
+}
+
+#prev:hover {
+    background-color: #e0a800;
+}
+
+#reset {
+    background-color: #dc3545;
+    color: white;
+    margin-top: 20px;
+}
+
+#reset:hover {
+    background-color: #e807e8;
+}
+
+
+#final-score {
+    font-size: 30px;
+    font-weight: bold;
+    color: black;
+    margin-top: 8px;
+}
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #ff6347;
+    opacity: 0;
+    animation: confetti-fall 5s ease-in forwards;
+}
+
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+.background{
+    background: rgba(0, 0, 0, 0.7) url('img.avif');
+    background-size: cover;
+    background-blend-mode: darken;
+    }
+
+    </style>
+</head>
+<body class="background">
+    <div class="quiz-container">
+        <h1> Quick Quiz </h1>
+        <h2 id="score"> Score: 0 / 50 </h2>
+        <button id="start-quiz"> Start Quiz </button>
+        <div id="timer-container">
+            <p id="timer">Time remaining: <span id="time">40</span> seconds</p>
+        </div>
+        <div id="quiz-content" style="display: none;">
+            <div id="question-box">
+                <p id="question-text"> Questions will appear here </p>
+            </div>
+            <div id="options-container"></div>
+            <div class="button-container">
+                <button id="prev"> Previous </button>
+                <button id="next"> Next </button>
+            </div>
+            <div id="final-score" style="display: none;"></div>
+            <button id="reset" style="display: none;"> Restart Quiz </button>
+        </div>
+    </div>
+    <script>
+        const questions = [
+    { question: "Name the 'half-humanoid' robot developed by ISRO for the Chandrayaan 2?", options: ["Vyommitra", "Sophia", "Ameca", "Kitt"], answer: "A" },
+    { question: "Which country is known as the land of rising sun?", options: ["Italy", "Canada", "Greece", "Japan"], answer: "D" },
+    { question: "Place where first film was screened?", options: ["Delhi", "Mumbai", "Dubai", "Chandigrah"], answer: "B" },
+    { question: "Which property adds space outside elements?", options: ["Span", "Padding", "Margin", "Outline"], answer: "C" },
+    { question: "Which programming language is used for web development?", options: ["Python", "JavaScript", "C++", "Java"], answer: "B" }
+];
+
+let currentQuestionIndex = 0;
+let score = 0;
+let selectedAnswers = new Array(questions.length).fill(null);
+
+const startButton = document.getElementById("start-quiz");
+const quizContent = document.getElementById("quiz-content");
+const questionText = document.getElementById("question-text");
+const optionsContainer = document.getElementById("options-container");
+const scoreDisplay = document.getElementById("score");
+const prevButton = document.getElementById("prev");
+const nextButton = document.getElementById("next");
+const resetButton = document.getElementById("reset");
+const finalScoreDisplay = document.getElementById("final-score");
+
+startButton.addEventListener("click", () => {
+    startButton.style.display = "none";
+    quizContent.style.display = "block";
+    loadQuestion();
+});
+
+function loadQuestion() {
+    optionsContainer.innerHTML = "";
+    finalScoreDisplay.style.display = "none";
+    resetButton.style.display = "none";
+
+    let q = questions[currentQuestionIndex];
+    questionText.textContent = `${currentQuestionIndex + 1}. ${q.question} (10 marks)`;
+
+    let labels = ["A", "B", "C", "D"];
+    q.options.forEach((option, index) => {
+        let optionBox = document.createElement("div");
+        optionBox.classList.add("option-box");
+
+        let abcdBox = document.createElement("div");
+        abcdBox.classList.add("abcd-box");
+        abcdBox.textContent = labels[index];
+
+        let optionText = document.createElement("span");
+        optionText.textContent = option;
+
+        optionBox.appendChild(abcdBox);
+        optionBox.appendChild(optionText);
+        optionsContainer.appendChild(optionBox);
+
+        if (selectedAnswers[currentQuestionIndex]) {
+            optionBox.classList.add("disabled");
+        }
+
+        optionBox.addEventListener("click", () => {
+            if (selectedAnswers[currentQuestionIndex]) return;
+
+            selectedAnswers[currentQuestionIndex] = labels[index];
+            optionBox.classList.add(labels[index] === q.answer ? "correct" : "incorrect");
+            optionBox.classList.add("disabled");
+
+            updateScore();
+        });
+    });
+
+    prevButton.disabled = currentQuestionIndex === 0;
+}
+
+nextButton.addEventListener("click", () => {
+    if (!selectedAnswers[currentQuestionIndex]) {
+        alert("Please select an answer before proceeding!");
+        return;
+    }
+    currentQuestionIndex++;
+    currentQuestionIndex < questions.length ? loadQuestion() : showFinalScore();
+});
+
+prevButton.addEventListener("click", () => {
+    if (currentQuestionIndex > 0) {
+        currentQuestionIndex--;
+        loadQuestion();
+    }
+});
+
+function updateScore() {
+    score = selectedAnswers.reduce((total, answer, idx) => answer === questions[idx].answer ? total + 10 : total, 0);
+    scoreDisplay.textContent = `Score: ${score} / 50`;
+}
+
+function showFinalScore() {
+    finalScoreDisplay.textContent = `Final Score: ${score} / 50`;
+    finalScoreDisplay.classList.add("show");
+    finalScoreDisplay.style.display = "block";
+    resetButton.style.display = "block";
+
+
+    generateConfetti();
+}
+
+resetButton.addEventListener("click", () => {
+    score = 0;
+    selectedAnswers = new Array(questions.length).fill(null);
+    currentQuestionIndex = 0;
+    scoreDisplay.textContent = "Score: 0 / 50";
+    loadQuestion();
+    finalScoreDisplay.style.display = "none";
+    resetButton.style.display = "none";
+    startButton.style.display = "block";
+    quizContent.style.display = "none";
+});
+
+function generateConfetti() {
+    const confettiContainer = document.createElement("div");
+    document.body.appendChild(confettiContainer);
+
+    for (let i = 0; i < 100; i++) {
+        const confetti = document.createElement("div");
+        confetti.classList.add("confetti");
+
+
+        const size = Math.random() * 10 + 5;
+        const color = getRandomColor();
+        const startPositionX = Math.random() * window.innerWidth;
+        const startPositionY = Math.random() * window.innerHeight;
+
+        confetti.style.width = `${size}px`;
+        confetti.style.height = `${size}px`;
+        confetti.style.backgroundColor = color;
+        confetti.style.left = `${startPositionX}px`;
+        confetti.style.top = `${startPositionY}px`;
+
+        confettiContainer.appendChild(confetti);
+
+
+        setTimeout(() => {
+            confetti.remove();
+        }, 6000);
+    }
+}
+
+function getRandomColor() {
+    const colors = ['#ff6347', '#ffd700', '#32cd32', '#1e90ff', '#8a2be2'];
+    return colors[Math.floor(Math.random() * colors.length)];
+}
+
+let time = 40;
+const timerElement = document.getElementById('time');
+const quizContainer = document.getElementById('quiz-content');
+const timerContainer = document.getElementById('timer-container');
+const startQuizBtn = document.getElementById('start-quiz');
+let intervalId;
+
+startQuizBtn.addEventListener('click', () => {
+    startQuizBtn.style.display = 'none';
+    quizContainer.style.display = 'block';
+    timerContainer.style.display = 'block';
+    intervalId = setInterval(() => {
+        time--;
+        timerElement.innerText = time;
+        if (time === 0) {
+            clearInterval(intervalId);
+            endQuiz();
+        }
+    }, 1000);
+});
+
+function endQuiz() {
+    quizContainer.innerHTML = 'Time\'s up! Quiz ended.';
+    timerContainer.style.display = 'none';
+    // Disable all input elements
+    const inputs = document.querySelectorAll('input');
+    
+    inputs.forEach(input => {
+        input.disabled = true;
+    });
+    // Automatically close the page after 2 seconds
+    setTimeout(() => {
+        window.close();
+    }, 2000);
+}
+    </script>
+</body>
+
+</html>
